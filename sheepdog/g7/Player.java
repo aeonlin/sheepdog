@@ -73,6 +73,18 @@ public class Player extends sheepdog.sim.Player {
         Point center = centerPoint(sheeps);
         // radius is a constant for now
         ArrayList<Point> sheepOutOfBounds = new ArrayList<Point>();
+    
+
+        // place all sheep out of bounds of radius
+        for(Point sheep: sheeps){
+            boolean outside = (sheep.x - center.x)^2 + (sheep.y - center.y)^2 <= Math.pow((double) radius, 2.0);
+            if(outside && sheep.x >= 50.0){
+                sheepOutOfBounds.add(sheep);
+            }
+        } 
+        return sheepOutOfBounds;
+    }
+
     private double vector_length(Point thePoint) {
         return Math.sqrt(thePoint.x * thePoint.x + thePoint.y * thePoint.y);
     }
@@ -91,14 +103,6 @@ public class Player extends sheepdog.sim.Player {
         return next;
     }
 
-        // place all sheep out of bounds of radius
-        for(Point sheep: sheeps){
-            boolean outside = (sheep.x - center.x)^2 + (sheep.y - center.y)^2 <= Math.pow((double) radius, 2.0);
-            if(outside && sheep.x >= 50.0){
-                sheepOutOfBounds.add(sheep);
-            }
-        } 
-        return sheepOutOfBounds;
     private boolean all_dogs_ready Point[] dogs) {
         for (Point d : dogs) {
             if(d.x <= 50) {
