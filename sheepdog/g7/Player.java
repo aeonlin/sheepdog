@@ -1,6 +1,7 @@
 package sheepdog.g7;
 
 import sheepdog.sim.Point;
+import java.util.ArrayList;
 
 public class Player extends sheepdog.sim.Player {
     private int nblacks;
@@ -19,7 +20,6 @@ public class Player extends sheepdog.sim.Player {
     public void init(int nblacks, boolean mode) {
         this.nblacks = nblacks;
         this.mode = mode;
-
         strategy_phase = -1; // nothing happens now
         Record globalRecord = new Record();
     }
@@ -30,7 +30,6 @@ public class Player extends sheepdog.sim.Player {
                       Point[] sheeps) { // positions of the sheeps
 
         Point current = dogs[id-1];
-
         // basic scenario
         if( mode == false) {
             if  (dogs.length == 1) {
@@ -47,10 +46,10 @@ public class Player extends sheepdog.sim.Player {
     }
 
     private Point basic_strategy(Point[] dogs, Point[] sheeps) {
-        Point next;
+        Point next = new Point(0.0,0.0);
         switch(strategy_phase) {
             case -1:
-                next = move_dogs_through_gate(dogs, sheeps);
+                next = move_dogs_to_the_other_side(dogs, sheeps);
             case 0:
                 next = sweep_sheep(dogs, sheeps);
                 break;
@@ -77,7 +76,7 @@ public class Player extends sheepdog.sim.Player {
 
         // place all sheep out of bounds of radius
         for(Point sheep: sheeps){
-            boolean outside = (sheep.x - center.x)^2 + (sheep.y - center.y)^2 <= Math.pow((double) radius, 2.0);
+            boolean outside = (Math.pow((double) sheep.x - center.x, 2) + Math.pow((double) sheep.y - center.y, 2) <= Math.pow((double) radius, 2.0));
             if(outside && sheep.x >= 50.0){
                 sheepOutOfBounds.add(sheep);
             }
@@ -103,7 +102,7 @@ public class Player extends sheepdog.sim.Player {
         return next;
     }
 
-    private boolean all_dogs_ready Point[] dogs) {
+    private boolean all_dogs_ready (Point[] dogs) {
         for (Point d : dogs) {
             if(d.x <= 50) {
                 return false;
@@ -116,8 +115,8 @@ public class Player extends sheepdog.sim.Player {
         double averageX = 0.0;
         double averageY = 0.0;
         for(Point point: sheeps){
-            sumOfX += point.x;
-            sumOfY += point.y;
+            averageX += point.x;
+            averageY += point.y;
         }
         averageX /= sheeps.length;
         averageY /= sheeps.length;
@@ -127,7 +126,7 @@ public class Player extends sheepdog.sim.Player {
     private Point move_dogs_to_the_other_side( Point[] dogs, Point[] sheeps) {
         Point next = new Point(dogs[id-1].x, dogs[id-1].y);
         Point goal = new Point(50.1, 50.0);
-        if(all_dogs_ready) {
+        if(all_dogs_ready(dogs)) {
             strategy_phase = 0;
         }
         else {
@@ -169,7 +168,7 @@ public class Player extends sheepdog.sim.Player {
                 (ends[3] < down_limit + distance) ) {
             return true;
         }
-        return return false;
+        return false;
     }
 
     private Point sweep_sheep( Point[] dogs, Point[] sheeps ) {
@@ -177,7 +176,7 @@ public class Player extends sheepdog.sim.Player {
         // input: the positions of all the sheeps
         // return: the dog position
 
-        Point next; // where this dog move
+        Point next = new Point(0.0, 0.0); // where this dog move
 
         // if the sheeps are sweeping from the fence,
         // change the strategy_phase
@@ -206,7 +205,8 @@ public class Player extends sheepdog.sim.Player {
         // return: the position of where the dog should move
         // Get sheep outside of desired radius
         // for now, radius is hard coded as 10m
-        Point[] sheepOutsideRadius = sheepOutsideRadius(sheeps, 10.0);
+        ArrayList<Point> sheepOutsideRadius = sheepOutsideRadius(sheeps, 10.0);
+        Point targetPoint = new Point(0.0,0.0);
         // below is the strategy for just one dog
         if(dogs.length == 1){
             // find the nearest sheep to get to go to the radius
@@ -217,7 +217,7 @@ public class Player extends sheepdog.sim.Player {
             // target direction is determined by slope of line between sheep and center point
             Point centerPoint = centerPoint(sheeps);
             double slope = (closestSheep.x - centerPoint.x) / (closestSheep.y - centerPoint.y);
-            Point lastPoint = globalRecord.dogsMovement[dogsMovement.length-1];
+            Point lastPoint = globalRecord.dogsMovement[globalRecord.dogsMovement.length-1];
             // move along arc!
             // left point of sheep
             Point leftMostPoint = new Point(closestSheep.x - 3, closestSheep.y);
@@ -225,14 +225,15 @@ public class Player extends sheepdog.sim.Player {
             Point bottomMostPoint = new Point(closestSheep.x, closestSheep.y - 3);
             Point topMostPoint = new Point(closestSheep.x, closestSheep.y + 3);
 
-            Point[] desiredPoints = Point[4];
-            desiredPoints[0] = leftMostPoint;
-            desiredPoints[1] = rightMostPoint;
-            desiredPoints[2] = bottomMostPoint;
-            desiredPoints[3] = topMostPoint;
+            ArrayList<Point> desiredPoints = new ArrayList<Point>(4);
+            desiredPoints.add(leftMostPoint);
+            desiredPoints.add(rightMostPoint);
+            desiredPoints.add(bottomMostPoint);
+            desiredPoints.add(topMostPoint);
+
             // I'm just going to move from this point to that
             if(slope >= 0){
-                Point targetPoint = closestSheep(desiredPoints, dog[0]);
+                targetPoint = closestSheep(desiredPoints, dogs[0]);
             }
             else{
                 // DO SOMETHING
@@ -241,19 +242,18 @@ public class Player extends sheepdog.sim.Player {
         }
 
         // TODO: below is the strategy for more than just one dog
-        Point next;
-        return next;
+        return new Point(0.0,0.0);
     }
 
     // find the closest sheep depending on the sheeps passed in
     // return the coordinates of the closest sheep
-    private Point closestSheep(Point[] sheeps, Point dog){
-        Point closestSheep;
+    private Point closestSheep(ArrayList<Point> sheeps, Point dog){
+        Point closestSheep = new Point(0.0,0.0);
         double closestDistance = 1000.0;
         for(Point sheep: sheeps){
             double minusXs = dog.x - sheep.x;
             double minusYs = dog.y - sheep.y;
-            double distance = Math.sqrt((Math.pow(minusXs)) + (Math.pow(minusYs)));
+            double distance = Math.sqrt((Math.pow(minusXs,2.0)) + (Math.pow(minusYs, 2.0)));
             if(distance < closestDistance){
                 closestDistance = distance;
                 closestSheep = sheep;
@@ -263,8 +263,8 @@ public class Player extends sheepdog.sim.Player {
     }
 
     private Point move_sheep( Point[] dogs, Point[] sheeps ) {
-        Point next;
-        return next;
+        // Point next;
+        return new Point(0.0, 0.0);
     }
 }
 
