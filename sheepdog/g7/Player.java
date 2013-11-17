@@ -212,8 +212,32 @@ public class Player extends sheepdog.sim.Player {
             // find the nearest sheep to get to go to the radius
             // closestSheep
             Point closestSheep = closestSheep(sheepOutsideRadius, dogs[0]);
-            // Now move the dog in the direction of the closest sheep towards the radius
-            
+            // Determine the target direction for the sheep to move in
+            // target direction is on three points side of circle
+            // target direction is determined by slope of line between sheep and center point
+            Point centerPoint = centerPoint(sheeps);
+            double slope = (closestSheep.x - centerPoint.x) / (closestSheep.y - centerPoint.y);
+            Point lastPoint = globalRecord.dogsMovement[dogsMovement.length-1];
+            // move along arc!
+            // left point of sheep
+            Point leftMostPoint = new Point(closestSheep.x - 3, closestSheep.y);
+            Point rightMostPoint = new Point(closestSheep.x + 3, closestSheep.y);
+            Point bottomMostPoint = new Point(closestSheep.x, closestSheep.y - 3);
+            Point topMostPoint = new Point(closestSheep.x, closestSheep.y + 3);
+
+            Point[] desiredPoints = Point[4];
+            desiredPoints[0] = leftMostPoint;
+            desiredPoints[1] = rightMostPoint;
+            desiredPoints[2] = bottomMostPoint;
+            desiredPoints[3] = topMostPoint;
+            // I'm just going to move from this point to that
+            if(slope >= 0){
+                Point targetPoint = closestSheep(desiredPoints, dog[0]);
+            }
+            else{
+                // DO SOMETHING
+            }
+            return targetPoint;
         }
 
         // TODO: below is the strategy for more than just one dog
