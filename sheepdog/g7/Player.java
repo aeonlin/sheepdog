@@ -58,20 +58,39 @@ public class Player extends sheepdog.sim.Player {
         return next;
     }
 
-    private double[] where_is_the_herd( Point[] sheeps) {
-        // return the center and the radius of the sheep herd
-        // herdInfo[0] = radius
-        // herdInfo[1] = center_x
-        // herdInfo[2] = center_y
-        double herdInfo = new double[3];
+    private ArrayList<Point> sheepOutsideRadius( Point[] sheeps, double radius) {
+        // find the sheep that are outside of the specified radius
+        // return a list of sheep that are outside of the radius
+        Point center = centerPoint(sheeps);
+        // radius is a constant for now
+        ArrayList<Point> sheepOutOfBounds = new ArrayList<Point>();
 
-        return herdInfo;
+        // place all sheep out of bounds of radius
+        for(Point sheep: sheeps){
+            boolean outside = (sheep.x - center.x)^2 + (sheep.y - center.y)^2 <= Math.pow((double) radius, 2.0);
+            if(outside && sheep.x >= 50.0){
+                sheepOutOfBounds.add(sheep);
+            }
+        } 
+        return sheepOutOfBounds;
+    }
+
+    private Point centerPoint(Point[] sheeps){
+        double averageX = 0.0;
+        double averageY = 0.0;
+        for(Point point: sheeps){
+            sumOfX += point.x;
+            sumOfY += point.y;
+        }
+        averageX /= sheeps.length;
+        averageY /= sheeps.length;
+        return new Point(averageX, averageY);
     }
 
     private Point sweep_sheep( Point[] dogs, Point[] sheeps ) {
         // goal: to sweep all the sheeps from the fence
         // input: the positions of all the sheeps
-        // return: the dog posision
+        // return: the dog position
 
         Point next; // where this dog move
 
@@ -85,9 +104,41 @@ public class Player extends sheepdog.sim.Player {
     }
 
     private Point collect_sheep( Point[] dogs, Point[] sheeps ) {
+        // goal: get sheep inside of desired radius
+        // input: the positions of the dogs and the sheeps
+        // return: the position of where the dog should move
+        // Get sheep outside of desired radius
+        // for now, radius is hard coded as 10m
+        Point[] sheepOutsideRadius = sheepOutsideRadius(sheeps, 10.0);
+        // below is the strategy for just one dog
+        if(dogs.length == 1){
+            // find the nearest sheep to get to go to the radius
+            // closestSheep
+            Point closestSheep = closestSheep(sheepOutsideRadius, dogs[0]);
+            // Now move the dog in the direction of the closest sheep towards the radius
+            
+        }
 
+        // TODO: below is the strategy for more than just one dog
         Point next;
         return next;
+    }
+
+    // find the closest sheep depending on the sheeps passed in
+    // return the coordinates of the closest sheep
+    private Point closestSheep(Point[] sheeps, Point dog){
+        Point closestSheep;
+        double closestDistance = 1000.0;
+        for(Point sheep: sheeps){
+            double minusXs = dog.x - sheep.x;
+            double minusYs = dog.y - sheep.y;
+            double distance = Math.sqrt((Math.pow(minusXs)) + (Math.pow(minusYs)));
+            if(distance < closestDistance){
+                closestDistance = distance;
+                closestSheep = sheep;
+            }
+        }
+        return closestSheep;
     }
 
     private Point move_sheep( Point[] dogs, Point[] sheeps ) {
