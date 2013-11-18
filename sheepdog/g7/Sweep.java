@@ -50,7 +50,7 @@ class Sweep {
           next = Geometry.travelTowards(current, arcLocation, max_dog_speed);
           break;
         case SWEEP_LEFT:
-          Point towardsCenter = new Point(right_limit/2 + rand, current.y);
+          Point towardsCenter = new Point(right_limit/2, current.y);
           next = Geometry.travelTowards(current, towardsCenter, max_dog_speed/3);
           break;
         default:
