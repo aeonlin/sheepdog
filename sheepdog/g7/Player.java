@@ -11,7 +11,7 @@ public class Player extends sheepdog.sim.Player {
     private static final double down_limit = 100.0;
     private static final double left_limit = 0.0;
     private static final double right_limit = 100.0;
-    private static final double max_dog_speed = 2.0;
+    private static final double max_dog_speed = 1.99;
 
     private Record globalRecord;
 
@@ -22,7 +22,7 @@ public class Player extends sheepdog.sim.Player {
         this.nblacks = nblacks;
         this.mode = mode;
         strategy_phase = -1; // nothing happens now
-        Record globalRecord = new Record();
+        globalRecord = new Record();
     }
 
     // Return: the next position
@@ -65,24 +65,20 @@ public class Player extends sheepdog.sim.Player {
     }
 
     private Point basic_strategy(Point[] dogs, Point[] sheeps) {
-        Point next = new Point(0.0,0.0);
         switch(strategy_phase) {
             case -1:
-                next = move_dogs_to_the_other_side(dogs, sheeps);
+                return move_dogs_to_the_other_side(dogs, sheeps);
             case 0:
-                next = sweep_sheep(dogs, sheeps);
-                break;
+                return sweep_sheep(dogs, sheeps);
             case 1:
-                next = collect_sheep(dogs, sheeps);
-                break;
+                return collect_sheep(dogs, sheeps);
             case 2:
-                next = move_sheep(dogs, sheeps);
-                break;
+                return move_sheep(dogs, sheeps);
             case 3:
             default:
                 break;
         }
-        return next;
+        return new Point(0.0, 0.0);
     }
 
     private ArrayList<Point> sheepOutsideRadius( Point[] sheeps, double radius) {
@@ -103,11 +99,17 @@ public class Player extends sheepdog.sim.Player {
         return sheepOutOfBounds;
     }
 
+    private void print_point(Point thePoint, String s) {
+        System.out.println( s + " : (" + thePoint.x + "," + thePoint.y + ")");
+    }
     private double vector_length(Point thePoint) {
         return Math.sqrt(thePoint.x * thePoint.x + thePoint.y * thePoint.y);
     }
     private Point next_toward_goal(Point current, Point goal, double speed) {
         Point direction = new Point( goal.x - current.x, goal.y - current.y );
+        if(vector_length(direction) < speed )  {
+            speed = vector_length(direction);
+        }
         return next_with_direction(current, direction, speed);
     }
     private Point next_with_direction(Point current, Point direction, double speed) {
@@ -115,10 +117,13 @@ public class Player extends sheepdog.sim.Player {
         if(s > max_dog_speed) {
             s = max_dog_speed;
         }
-        double ratio = speed / vector_length(direction);
-        Point next = new Point(current.x + ratio * direction.x, 
+        double direction_length = vector_length(direction);
+        if( direction_length != 0) {
+            double ratio = speed / direction_length;
+            return new Point(current.x + ratio * direction.x, 
                                 current.y + ratio * direction.y);
-        return next;
+        }
+        return current;
     }
 
     private boolean all_dogs_ready (Point[] dogs) {
@@ -149,8 +154,9 @@ public class Player extends sheepdog.sim.Player {
             strategy_phase = 0;
         }
         else {
-            next = next_toward_goal(next, goal, 2.0);
             strategy_phase = -1;
+            System.out.println("phase == -1");
+            return next_toward_goal(next, goal, max_dog_speed);
         }
         return next;
     }
@@ -190,12 +196,83 @@ public class Player extends sheepdog.sim.Player {
         return false;
     }
 
+
+    // divide the fence of the right half into segments
+    // every dog is responsible for one segment
+    private Point line_to_plane_transform(double x) {
+        if(x<0.0) {
+            return new Point(50.0,0.0);
+        }
+        if(x<50.0) {
+            return new Point(50.0 + x, 0.0);
+        }
+        if(x<150.0) {
+            return new Point(100.0, x - 50.0);
+        }
+        if(x<200.0) {
+            return new Point(250.0 - x, 100.0);
+        }
+        return new Point(50.0, 100.0);
+    }
+    private double plane_to_line_transform(Point thePoint) {
+        if(thePoint.y == 0.0) {
+            return thePoint.x - 50.0;
+        }
+        if(thePoint.y == 100.0) {
+            return 250.0 - thePoint.x;
+        }
+        if(thePoint.x == 100.0) {
+            return thePoint.y + 50.0;
+        }
+        return 0.0;
+    }
+
+    private Point[] sweep_segment(int numberOfDogs) {
+        Point[] theSegment = new Point[2];
+        // up side: 0.0 - 50.0
+        // right side: 50.0 - 150.0
+        // down side: 150.0 - 200.0
+        double start = (double)(id-1) * 200.0 / (double)(numberOfDogs);
+        double end = (double)(id) * 200.0 / (double)(numberOfDogs);
+        theSegment[0] = line_to_plane_transform(start);
+        theSegment[1] = line_to_plane_transform(end);
+        return theSegment;
+    }
+
+    private Point next_along_fence(Point current, Point goal) {
+        double start = plane_to_line_transform(current);
+        double end = plane_to_line_transform(goal);
+        double setPoint = start;
+        if( start < end ) {
+            setPoint = start + max_dog_speed;
+            if( 50.0 - max_dog_speed < start && start < 50.0) {
+                setPoint = 50.0;
+            }
+            if( 150.0 - max_dog_speed < start && start < 150.0) {
+                setPoint = 150.0;
+            }
+            return line_to_plane_transform( setPoint );
+        }
+        if( start > end ) {
+            setPoint = start - max_dog_speed;
+            if( 150.0 + max_dog_speed > start && start > 150.0) {
+                setPoint = 150.0;
+            }
+            if( 50.0 + max_dog_speed > start && start > 50.0) {
+                setPoint = 50.0;
+            }
+            return line_to_plane_transform( setPoint );
+        }
+        return current;
+    }
+
     private Point sweep_sheep( Point[] dogs, Point[] sheeps ) {
         // goal: to sweep all the sheeps from the fence
         // input: the positions of all the sheeps
         // return: the dog position
 
-        Point next = new Point(0.0, 0.0); // where this dog move
+        // where this dog move
+        Point next = new Point(dogs[id-1].x, dogs[id-1].y); 
 
         // if the sheeps are sweeping from the fence,
         // change the strategy_phase
@@ -205,15 +282,54 @@ public class Player extends sheepdog.sim.Player {
         // if not, keep dog moving along the fence
         // and let the sheeps move from them
         else {
-
             /*
             "finite state machine"
-
             specify responsible fence segment
             keep moving back and forth
             clockwise move
             counterclockwise move
             */
+            Point[] theSegment = sweep_segment(dogs.length);
+
+            System.out.println("sweepPhase = " + globalRecord.sweepPhase);
+            print_point(theSegment[0], "start");
+            print_point(theSegment[1], "  end");
+            switch(globalRecord.sweepPhase) {
+                case -1:
+                    //go to the start point
+                    //if already there
+                    //move on to next subphase
+                    if(next.equals(theSegment[0])) {
+                        globalRecord.sweepPhase = 0;
+                    }
+                    else {
+                        next = next_toward_goal(next, theSegment[0], max_dog_speed);
+                    }
+                    break;
+                case 0:
+                    //move from "start" to "end"
+                    if(next.equals(theSegment[1])) {
+                        globalRecord.sweepPhase = 1;
+                    }
+                    else {
+                        next = next_toward_goal(next, 
+                            next_along_fence(next, theSegment[1]), max_dog_speed / 5);
+                        print_point(next_along_fence(next, theSegment[1]),"alongFence");
+                    }
+                    break;
+                case 1:
+                    //move from "end" back to "start"
+                    if(next.equals(theSegment[0])) {
+                        globalRecord.sweepPhase = 0;
+                    }
+                    else {
+                        next = next_toward_goal(next, 
+                            next_along_fence(next, theSegment[0]), max_dog_speed / 5);
+                    }
+                    break;
+                default:
+                    break;
+            }
         }
         return next;
     }
@@ -287,12 +403,4 @@ public class Player extends sheepdog.sim.Player {
     }
 }
 
-class Record {
-
-    public Point[] sheepsMovement;
-    public Point[] dogsMovement;
-
-    // add more if you need it!
-
-}
 
