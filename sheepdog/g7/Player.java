@@ -1,7 +1,7 @@
 package sheepdog.g7;
 
 import sheepdog.sim.Point;
-import java.util.ArrayList;
+import java.util.*;
 
 public class Player extends sheepdog.sim.Player {
     private int nblacks;
@@ -11,11 +11,12 @@ public class Player extends sheepdog.sim.Player {
     private static final double down_limit = 100.0;
     private static final double left_limit = 0.0;
     private static final double right_limit = 100.0;
-
     private static final double max_dog_speed = 2.0;
+
     private Record globalRecord;
 
     private int strategy_phase;
+    public Sweep[] sweeps;
 
     public void init(int nblacks, boolean mode) {
         this.nblacks = nblacks;
@@ -23,7 +24,7 @@ public class Player extends sheepdog.sim.Player {
         strategy_phase = -1; // nothing happens now
         Record globalRecord = new Record();
     }
-    
+
     // Return: the next position
     // my position: dogs[id-1]
     public Point move(Point[] dogs, // positions of dogs
@@ -36,13 +37,31 @@ public class Player extends sheepdog.sim.Player {
                 return basic_strategy(dogs, sheeps);
             }
             else {
-                return current;    
+                return manyDogStrategy(dogs, sheeps);
             }
         }
         // advanced scenario
         else {
             return current;
         }
+    }
+
+    private Point manyDogStrategy(Point[] dogs, Point[] sheep) {
+      if (sweeps == null) sweeps = new Sweep[dogs.length];
+      int idx = id - 1;
+
+      if (sweeps[idx] == null) {
+        sweeps[idx] = new Sweep(dogs, sheep, id - 1);
+      } else {
+        sweeps[idx].current = dogs[idx];
+        sweeps[idx].dogs = dogs;
+        sweeps[idx].sheep = sheep;
+      }
+      return sweeps[idx].nextMove();
+    }
+
+    private void log(String message){
+      System.out.println(message);
     }
 
     private Point basic_strategy(Point[] dogs, Point[] sheeps) {
