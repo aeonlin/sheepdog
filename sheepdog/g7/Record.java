@@ -9,7 +9,8 @@ class Record {
 
     // add more if you need it!
     public int sweepPhase;
-
+    public int targetSheepIndex;
+    
     public Record() {
         sweepPhase = -1;
     }
