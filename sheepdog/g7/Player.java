@@ -14,7 +14,7 @@ public class Player extends sheepdog.sim.Player {
     private static final double max_dog_speed = 1.9999;
     private static final double max_sheep_speed = 0.9999;
 
-    private static final double border_distance = 10.00;
+    private static final double border_distance = 49.5;
 
     private Record globalRecord;
 
@@ -94,7 +94,7 @@ public class Player extends sheepdog.sim.Player {
 
         // place all sheep out of bounds of radius
         for(Point sheep: sheeps){
-            boolean outside = (Math.pow((double) sheep.x - center.x, 2) + Math.pow((double) sheep.y - center.y, 2) <= Math.pow((double) radius, 2.0));
+            boolean outside = !(Math.pow((double) sheep.x - center.x, 2) + Math.pow((double) sheep.y - center.y, 2) <= Math.pow((double) radius, 2.0));
             if(outside && sheep.x >= 50.0){
                 sheepOutOfBounds.add(sheep);
             }
@@ -428,25 +428,29 @@ public class Player extends sheepdog.sim.Player {
         // return: the position of where the dog should move
         // Get sheep outside of desired radius
         // for now, radius is hard coded as 10m
-        ArrayList<Point> sheepOutsideRadius = sheepOutsideRadius(sheeps, 10.0);
-        Point targetPoint = new Point(0.0,0.0);
+        ArrayList<Point> sheepOutsideRadius = sheepOutsideRadius(sheeps, 5.0);
+        if(sheepOutsideRadius  != null){
+            System.out.println("THERE ARE THIS MANY SHEEP OUTSIDE RADIUS" + sheepOutsideRadius);
+        }
+        Point targetPoint = new Point(dogs[id-1].x, dogs[id-1].y);
         // below is the strategy for just one dog
         if(dogs.length == 1){
             // find the nearest sheep to get to go to the radius
             // closestSheep
-            Point closestSheep = closestSheep(sheepOutsideRadius, dogs[0]);
+            Point closestSheep = closestSheep(sheepOutsideRadius, dogs[id-1]);
             // Determine the target direction for the sheep to move in
             // target direction is on three points side of circle
             // target direction is determined by slope of line between sheep and center point
             Point centerPoint = centerPoint(sheeps);
             double slope = (closestSheep.x - centerPoint.x) / (closestSheep.y - centerPoint.y);
-            Point lastPoint = globalRecord.dogsMovement[globalRecord.dogsMovement.length-1];
+            //System.out.println(globalRecord.dogsMovement.length);
+            //Point lastPoint = globalRecord.dogsMovement[globalRecord.dogsMovement.length-1];
             // move along arc!
             // left point of sheep
-            Point leftMostPoint = new Point(closestSheep.x - 3, closestSheep.y);
-            Point rightMostPoint = new Point(closestSheep.x + 3, closestSheep.y);
-            Point bottomMostPoint = new Point(closestSheep.x, closestSheep.y - 3);
-            Point topMostPoint = new Point(closestSheep.x, closestSheep.y + 3);
+            Point leftMostPoint = new Point(closestSheep.x - .1, closestSheep.y);
+            Point rightMostPoint = new Point(closestSheep.x + .1, closestSheep.y);
+            Point bottomMostPoint = new Point(closestSheep.x, closestSheep.y - .1);
+            Point topMostPoint = new Point(closestSheep.x, closestSheep.y + .1);
 
             ArrayList<Point> desiredPoints = new ArrayList<Point>(4);
             desiredPoints.add(leftMostPoint);
@@ -455,8 +459,11 @@ public class Player extends sheepdog.sim.Player {
             desiredPoints.add(topMostPoint);
 
             // I'm just going to move from this point to that
+            System.out.println(slope);
             if(slope >= 0){
-                targetPoint = closestSheep(desiredPoints, dogs[0]);
+                Point newTarget = closestSheep(desiredPoints, dogs[id-1]);
+                targetPoint = next_toward_goal(targetPoint, newTarget, max_dog_speed);
+                //next_with_direction
             }
             else{
                 // DO SOMETHING
@@ -466,6 +473,7 @@ public class Player extends sheepdog.sim.Player {
 
         // TODO: below is the strategy for more than just one dog
         return new Point(0.0,0.0);
+        //return next_toward_goal(next, projection_to_fence(next), max_dog_speed);
     }
 
     // find the closest sheep depending on the sheeps passed in
