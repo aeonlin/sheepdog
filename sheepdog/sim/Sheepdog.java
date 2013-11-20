@@ -179,6 +179,8 @@ public class Sheepdog
         JFrame f;
         FieldPanel field;
         JButton next;
+        JButton next10;
+        JButton next50;
         JLabel label;
 
         public SheepdogUI() {
@@ -188,14 +190,14 @@ public class Sheepdog
 
         public void init() {}
 
-        public void actionPerformed(ActionEvent e) {
-
+        private boolean performOnce() {
             if (tick > MAX_TICKS) {
                 label.setText("Time out!!!");
                 label.setVisible(true);
                 // print error message
                 System.err.println("[ERROR] The player is time out!");
                 next.setEnabled(false);
+                return false;
             }
             else if (endOfGame()) {
                 label.setText("Finishes in " + tick + " ticks!");
@@ -203,10 +205,29 @@ public class Sheepdog
                 // print success message
                 System.err.println("[SUCCESS] The player achieves the goal in " + tick + " ticks.");
                 next.setEnabled(false);
+                return false;
             }
             else {
                 playStep();
+                return true;
             }
+        }
+
+        public void actionPerformed(ActionEvent e) {
+            int steps = 0;
+
+            if (e.getSource() == next)
+                steps = 1;
+            else if (e.getSource() == next10)
+                steps = 10;
+            else if (e.getSource() == next50)
+                steps = 50;
+
+            for (int i = 0; i < steps; ++i) {
+                if (!performOnce())
+                    break;
+            }
+
             repaint();
         }
 
@@ -220,15 +241,23 @@ public class Sheepdog
             next = new JButton("Next"); 
             next.addActionListener(this);
             next.setBounds(0, 0, 100, 50);
+            next10 = new JButton("Next10"); 
+            next10.addActionListener(this);
+            next10.setBounds(100, 0, 100, 50);
+            next50 = new JButton("Next50"); 
+            next50.addActionListener(this);
+            next50.setBounds(200, 0, 100, 50);
 
             label = new JLabel();
             label.setVisible(false);
-            label.setBounds(150, 0, 100, 50);
+            label.setBounds(0, 60, 200, 50);
             label.setFont(new Font("Arial", Font.PLAIN, 15));
 
             field.setBounds(100, 100, FIELD_SIZE + 50, FIELD_SIZE + 50);
 
             this.add(next);
+            this.add(next10);
+            this.add(next50);
             this.add(label);
             this.add(field);
 
@@ -390,7 +419,7 @@ public class Sheepdog
 
         // hit the left fence        
         if (nx < 0) {
-            System.err.println("SHEEP HITS THE LEFT FENCE!!!");
+            //            System.err.println("SHEEP HITS THE LEFT FENCE!!!");
 
             // move the point to the left fence
             Point temp = new Point(0, now.y);
@@ -403,7 +432,7 @@ public class Sheepdog
         }
         // hit the right fence
         if (nx > dimension) {
-            System.err.println("SHEEP HITS THE RIGHT FENCE!!!");
+            //            System.err.println("SHEEP HITS THE RIGHT FENCE!!!");
 
             // move the point to the right fence
             Point temp = new Point(dimension, now.y);
@@ -413,7 +442,7 @@ public class Sheepdog
         }
         // hit the up fence
         if (ny < 0) {
-            System.err.println("SHEEP HITS THE UP FENCE!!!");
+            //            System.err.println("SHEEP HITS THE UP FENCE!!!");
 
             // move the point to the up fence
             Point temp = new Point(now.x, 0);
@@ -423,7 +452,7 @@ public class Sheepdog
         }
         // hit the bottom fence
         if (ny > dimension) {
-            System.err.println("SHEEP HITS THE BOTTOM FENCE!!!");
+            //            System.err.println("SHEEP HITS THE BOTTOM FENCE!!!");
 
             Point temp = new Point(now.x, dimension);
             double moved = (dimension - now.y);
@@ -436,7 +465,7 @@ public class Sheepdog
         
         // hit the middle fence
         if (hitTheFence(now.x, now.y, nx, ny)) {
-            System.err.println("SHEEP HITS THE CENTER FENCE!!!");
+            //            System.err.println("SHEEP HITS THE CENTER FENCE!!!");
             //            System.err.println(nx + " " + ny);
             //            System.err.println(ox + " " + oy);
 
@@ -541,14 +570,30 @@ public class Sheepdog
 
     }
 
+    static Point[] copyPointArray(Point[] points) {
+        Point[] npoints = new Point[points.length];
+        for (int p = 0; p < points.length; ++p)
+            npoints[p] = new Point(points[p]);
+
+        return npoints;
+    }
+
 
     void playStep() {
-        tick++;
+        tick++;        
 
         // move the player dogs
         Point[] next = new Point[ndogs];
         for (int d = 0; d < ndogs; ++d) {
-            next[d] = players[d].move(dogs, sheeps);
+            Point[] dogcopy = copyPointArray(dogs);
+
+            try {
+                next[d] = players[d].move(dogcopy, sheeps);
+            } catch (Exception e) {
+                e.printStackTrace();
+                System.err.println("[ERROR] Player throws exception!!!!");
+                next[d] = dogs[d]; // let the dog stay
+            }
 
             if (verbose) {
                 System.err.format("Dog %d moves from (%.2f,%.2f) to (%.2f,%.2f)\n", 
