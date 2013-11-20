@@ -328,7 +328,8 @@ public class Player extends sheepdog.sim.Player {
     private int[] list_sheeps_to_move_from_fence(Point[] sheeps) {
         ArrayList<Integer> theList = new ArrayList<Integer>();
         for(int i = 0; i < sheeps.length; i++ ) {
-            if(!sheeps_away_from_fence(sheeps[i], border_distance)) {
+            if(!sheeps_away_from_fence(sheeps[i], border_distance)
+                && sheeps[i].x >= 50.0 ) {
                 theList.add(i);
             }
         }
@@ -382,6 +383,18 @@ public class Player extends sheepdog.sim.Player {
                 3.iii until the sheeps are away from the fence
                 3.iv then it move back to the fence and move to the next sheep
             */
+            if ( dogs[id-1].x < 50.0 ) {
+                if (( dogs[id-1].y < dogs[id-1].x ) ||
+                    ( dogs[id-1].y + dogs[id-1].x > 100.0)) {
+                    Point turnPoint = new Point(dogs[id-1].x, 50.0);
+                    next = next_with_direction( next, turnPoint, max_dog_speed);
+                }
+                else {
+                    strategy_phase = -1;
+                    globalRecord.sweepPhase = -1;
+                }
+            }
+            else {
 
             System.out.println("sweepPhase = " + globalRecord.sweepPhase);
             int[] sheep_list = list_sheeps_to_move_from_fence(sheeps);
@@ -402,11 +415,17 @@ public class Player extends sheepdog.sim.Player {
                     break;
                 case 0:
                     Point theSheep = sheeps[globalRecord.targetSheepIndex];
+                    double moveSpeed = max_sheep_speed;
                     if (sheeps_away_from_fence(theSheep, border_distance)) {
                         globalRecord.sweepPhase = 1;
                         break;
                     }
-                    next = next_toward_goal(next, theSheep, max_sheep_speed);
+                    if(vector_length(next,theSheep) > 3.0) {
+                        moveSpeed = max_dog_speed;
+                    }
+                    next = next_toward_goal(next, 
+                        next_toward_goal(theSheep, projection_to_fence(theSheep), 0.1), 
+                        moveSpeed);
                     break;
                 case 1:
                     if (on_the_fence(next)) {
@@ -417,6 +436,7 @@ public class Player extends sheepdog.sim.Player {
                     break;
                 default:
                     break;
+            }
             }
         }
         return next;
