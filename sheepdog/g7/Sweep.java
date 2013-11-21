@@ -45,7 +45,8 @@ class Sweep {
           next = Geometry.travelTowards(current, farRight, max_dog_speed);
           break;
         case ALIGN_ON_FAR_WALL:
-          double y = (down_limit / (dogs.length-1) * id);
+          double y = (down_limit / (dogs.length) * id);
+          System.out.println("DOG ID: " + id + "Y Value: " + y);
           Point arcLocation = new Point(right_limit, y);
           next = Geometry.travelTowards(current, arcLocation, max_dog_speed);
           break;

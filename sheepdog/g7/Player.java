@@ -37,15 +37,15 @@ public class Player extends sheepdog.sim.Player {
         // basic scenario
         if( mode == false) {
 
-            return basic_strategy(dogs, sheeps);
-            /*
-            if  (dogs.length == 1) {
+            // return basic_strategy(dogs, sheeps);
+            
+            if  (dogs.length <= 4) {
                 return basic_strategy(dogs, sheeps);
             }
             else {
                 return manyDogStrategy(dogs, sheeps);
             }
-            */
+            
         }
         // advanced scenario
         else {
