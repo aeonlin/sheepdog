@@ -43,7 +43,7 @@ class Geometry {
   // the function only needs to be called once per radius setting
   // the array should be set to a global variable in the Sweep class
   // each stage - is a stage of the radius instead of like sweeping and stuff
-  public static Point arcPoints(int numDogs,double angle, double radius, Point firstPoint){
+  public static Point[] arcPoints(int numDogs,double angle, double radius, Point firstPoint){
       double fx = Math.cos(angle);
       double fy = Math.sin(angle);
       double lx = -1.0 * fy;
@@ -57,14 +57,25 @@ class Geometry {
       arcPoints[0] = new Point(firstX,firstY);
       // this will caculate all the arc Points
     for(int i=1; i< numDogs; i++){
-      double sub_angle = (i/numDogs * 1.0) * (angle * 0.01745329251);
-      double x_i = allPoints[i-1] + radius * (Math.sin(sub_angle) * fx) + (1.0- Math.cos(sub_angle))*(-lx));
-      double y_i = allPoints[i-1]+radius*(Math.sin(sub_angle)*fy + (1.0-Math.cos(sub_angle))*(-ly));
+      double sub_angle = ((i*1.0)/numDogs) * (angle * 0.01745329251);
+      System.out.println("SUB ANGLE: " + sub_angle);
+      double x_i = arcPoints[i-1].x + radius * (Math.sin(sub_angle) * fx) + (1.0- Math.cos(sub_angle))*(-lx);
+      double y_i = arcPoints[i-1].y + radius*(Math.sin(sub_angle)*fy + (1.0-Math.cos(sub_angle))*(-ly));
       arcPoints[i] = new Point(x_i, y_i);
     }
-    return allPoints;
+    for(Point point: arcPoints){
+      System.out.println("POINT: " + point.x + " " + point.y);
+    }
+    return arcPoints;
   }
 
+  public static Point[] calcArcPoints(Point[] dogs, double r){
+    double arcLength = lengthOfTheArc(dogs);
+    double arcAngle = angleOfTheArc(dogs, r);
+    Point firstPoint = FirstPoint(r, arcAngle);
+    return arcPoints(dogs.length, arcAngle, r, firstPoint);
+  }
+ 
  public static double lengthOfTheArc(Point[] dogs)
   {  
       double length;
@@ -76,27 +87,71 @@ class Geometry {
      double dx = p2.x - p1.x;
      double dy = p2.y - p1.y;
      length =  Math.sqrt( dx*dx + dy*dy);
-     return length;
+     System.out.println("LENGTH: " + length);
+     // return length;
+     return 100.0;
   }
   
-  public static double angleOfTheArc(double lengthOfArc, double r)
-  
+  public static double angleOfTheArc(Point[] dogs, double radius)
   {
-    double theta;
-    theta = (lengthOfArc*180)/(3.14*r);
-    return theta;
+   double theta;
+  double oppositeSideLength, adjacentSideLength;
+  double minY = Math.abs(dogs[0].y);
+    for(int i = 1 ; i < dogs.length ; i++)
+    {
+      if(Math.abs(dogs[i].y) < minY)
+        minY = Math.abs(dogs[i].y) ;      
+    }
     
+  oppositeSideLength = Math.abs(50 - minY );
+  adjacentSideLength = radius;
+  
+  theta = Math.atan(oppositeSideLength/adjacentSideLength);
+    return Math.abs(theta*2.0);
   }
   
   
   public static Point FirstPoint(double r, double theta)
   
   {
-    Point firstp = null;
+    Point firstp = new Point(0.0, 0.0);
     firstp.x = 50 + r*Math.cos(theta/2);
     firstp.y = 50 + r*Math.sin(theta/2);
-    
+    System.out.println("FIRST POINT: " + firstp.x + " " + firstp.y);
     return firstp;
   }
+
+  public static Point next_toward_goal(Point current, Point goal, double speed) {
+        Point direction = new Point( goal.x - current.x, goal.y - current.y );
+        System.out.println("v_l:" + vector_length(direction) + ", speed_limit:" + speed);
+        if(vector_length(direction) <= speed )  {
+            System.out.println("jump to the goal");
+            return goal;
+        }
+        return next_with_direction(current, direction, speed);
+    }
+
+ private static Point next_with_direction(Point current, Point direction, double speed) {
+        double s = speed;
+        if(s > 1.99999) {
+            s = 1.99999;
+        }
+        double direction_length = vector_length(direction);
+        if( direction_length != 0) {
+            double ratio = speed / direction_length;
+            return new Point(current.x + ratio * direction.x, 
+                                current.y + ratio * direction.y);
+        }
+        return current;
+    }
+
+  private static double vector_length(Point thePoint) {
+        return Math.sqrt(thePoint.x * thePoint.x + thePoint.y * thePoint.y);
+    }
+  private static double vector_length(Point pointA, Point pointB) {
+        double dx = pointA.x - pointB.x;
+        double dy = pointA.y - pointB.y;
+        return Math.sqrt( dx*dx + dy*dy);
+    }
 
 }
