@@ -51,7 +51,7 @@ class Sweep {
           break;
         case SWEEP_LEFT:
           Point towardsCenter = new Point(right_limit/2, current.y);
-          next = Geometry.travelTowards(current, towardsCenter, max_dog_speed/3);
+          next = Geometry.travelTowards(current, towardsCenter, max_dog_speed);
           break;
         default:
           next = current;
@@ -69,8 +69,7 @@ class Sweep {
       } else {
         nextMode = ALIGN_ON_FAR_WALL;
       }
-      System.out.println(allDogsLinedUp());
-      System.out.println("ALIGN_ON_FAR_WALL: "  + (mode == ALIGN_ON_FAR_WALL));
+
       if ((nextMode == ALIGN_ON_FAR_WALL && allDogsLinedUp()) || mode == SWEEP_LEFT){
         System.out.println("NEXT MODE IS SWEEP");
         nextMode = SWEEP_LEFT;

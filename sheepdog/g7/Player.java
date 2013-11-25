@@ -1,4 +1,5 @@
 package sheepdog.g7;
+import java.util.*;
 
 import sheepdog.sim.Point;
 import java.util.*;
@@ -14,6 +15,7 @@ public class Player extends sheepdog.sim.Player {
     private static final double max_dog_speed = 2.0;
 
     private Record globalRecord;
+    private TreeStrategy[] treeStrategies;
 
     private int strategy_phase;
     public Sweep[] sweeps;
@@ -29,22 +31,28 @@ public class Player extends sheepdog.sim.Player {
     // my position: dogs[id-1]
     public Point move(Point[] dogs, // positions of dogs
                       Point[] sheeps) { // positions of the sheeps
-
         Point current = dogs[id-1];
+
+        if (treeStrategies == null){
+          treeStrategies = new TreeStrategy[dogs.length];
+        } 
+        if (treeStrategies[id-1] == null){
+          treeStrategies[id-1] = new TreeStrategy(current, sheeps, dogs, id, nblacks);
+        } else {
+          treeStrategies[id-1].update(current, sheeps, dogs);
+        }
+
         // basic scenario
         if( mode == false) {
-            if  (dogs.length == 1) {
-                return basic_strategy(dogs, sheeps);
-            }
-            else {
-                return manyDogStrategy(dogs, sheeps);
-            }
+          System.out.println("here");
+            return treeStrategies[id-1].nextMove();
         }
         // advanced scenario
         else {
             return current;
         }
     }
+
 
     private Point manyDogStrategy(Point[] dogs, Point[] sheep) {
       if (sweeps == null) sweeps = new Sweep[dogs.length];
@@ -99,7 +107,7 @@ public class Player extends sheepdog.sim.Player {
             if(outside && sheep.x >= 50.0){
                 sheepOutOfBounds.add(sheep);
             }
-        } 
+        }
         return sheepOutOfBounds;
     }
 
@@ -285,6 +293,8 @@ public class Player extends sheepdog.sim.Player {
         // Point next;
         return new Point(0.0, 0.0);
     }
+
+
 }
 
 class Record {

@@ -22,5 +22,15 @@ class Geometry {
     dist -= 0.001;
     return travelAlong(current, goal, current, goal, dist);
   }
+  public static double distance(Point a, Point b) {
+      return Math.sqrt((a.x-b.x) * (a.x-b.x) +
+                       (a.y-b.y) * (a.y-b.y));
+  }
+  static double vectorLength(double ox, double oy) {
+      return Math.sqrt(ox * ox + oy * oy);
+  }
+  static double vectorLengthPoint(Point p) {
+      return Math.sqrt(p.x*p.x + p.y*p.y);
+  }
 
 }
