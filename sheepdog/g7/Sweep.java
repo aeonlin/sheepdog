@@ -26,6 +26,7 @@ class Sweep {
   public Point current;
   public int id;
   public int counter = 0;
+  public boolean linedDogs = false;
 
   public boolean sweeping = false;
 
@@ -70,21 +71,43 @@ class Sweep {
             next = Geometry.next_toward_goal(current, towardsCenter, max_dog_speed/3);
           }
           else if(doneSqueezing()){
+        	Point next1 = new Point(0.0,0.0);
             System.out.println("DONE SQUEEZING NOW");
             globalRecord.sweepPhase =2;
+            if(dogs[id].x >= 53.0 && (dogs[id].y >48.0 || dogs[id].y <52.0))
+            {	next1 = new Point(dogs[id].x-1.0, dogs[id].y);
+                next = Geometry.next_toward_goal(current, next1, max_dog_speed/3);
           }
+            else
+            {   next1 = new Point(dogs[id].x, dogs[id].y);
+            	next = Geometry.next_toward_goal(current, next1, max_dog_speed/3);
+            }
+            }
           else{
             // Top six dogs
             if(id < 3){
-              Point goalPoint = new Point(50.0 + id, ++counter);
+            	Point goalPoint = new Point(0.0,0.0);
+              if(linedOnWall()){
+            	  goalPoint = new Point(50.0 + id, ++counter);
+              }
+              else{
+            	  goalPoint = new Point(50 + id, 0);
+              }
               next = Geometry.next_toward_goal(current, goalPoint, max_dog_speed/3);
             }
             // ones at bottom
             else if(id > dogs.length-4){
-              Point goalPoint = new Point((50.0 + dogs.length-id), 100.0 - (++counter));
+            	Point goalPoint = new Point(0.0,0.0);
+            	if(linedOnWall()){
+            		goalPoint = new Point((50.0 + dogs.length-id), 100.0 - (++counter));
+            	}
+            	else{
+            		goalPoint = new Point((50.0 + dogs.length-id), 100.0);
+            	}
               next = Geometry.next_toward_goal(current, goalPoint, max_dog_speed/3);
             }
             else{
+            	
               double newY = (down_limit / (dogs.length-7.0)) * (id-3.0);
               System.out.println("Y VALUE: " + newY);
               System.out.println("DOG ID: " + id + "Y Value: " + newY);
@@ -107,7 +130,29 @@ class Sweep {
       }
       return next;
   }
-
+  
+  public boolean linedOnWall(){
+	//  if(dogs[0].y == 0.0 && dogs[1].y == 0.0 && dogs[2].y == 0.0 && dogs[dogs.length-2].y == 100.0 && dogs[dogs.length-3].y == 100.0 && dogs[dogs.length-4].y == 100.0){
+	  if(linedDogs){
+		  return true;
+	  }
+	  for(int i=0;i<3;i++)
+		  
+	  {
+		  if(dogs[i].y> 0.0)
+			  return false;
+	  }
+	  for(int i = dogs.length-1; i< dogs.length -4; i--) 
+	  {
+		  if(Math.abs(dogs[i].y-100)> 0.0)
+		  return false;
+			  
+	  }
+	  	  linedDogs = true;
+		  return true;
+	  }
+//	  return false;
+//  }
   public boolean allDogsOnArc(Point[] dogs){
     for(Point dog: dogs){
       boolean checkOnRadius = Math.abs((Math.pow((dog.x - 50.0),2) + Math.pow((dog.y - 50.0),2)) - (Math.pow(radius,2))) <= .5;
@@ -157,8 +202,9 @@ class Sweep {
 
   private boolean doneSqueezing(){
     System.out.println("THIS IS THE DOGS Y: " + dogs[0].y);
-    if(Math.abs(dogs[0].y - 50.0) <= 0.3){
-      return true;
+   // if(Math.abs(dogs[0].y - 50.0) <= 0.3){
+    if(dogs[1].y > 48.0)
+    	 {return true;
     }
     return false;
   }

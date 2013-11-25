@@ -39,7 +39,7 @@ public class Player extends sheepdog.sim.Player {
 
             // return basic_strategy(dogs, sheeps);
             
-            if  (dogs.length <= 4) {
+            if  (dogs.length < 40) {
                 return basic_strategy(dogs, sheeps);
             }
             else {
