@@ -35,7 +35,7 @@ class Record {
     public void initialize(int id, Point[] dogs, Point[] sheeps) {
     	set_turning_point(id, dogs.length);
     	calculate_gap_to_speed();
-        initialize = true;
+        initialized = true;
 		/*
     	if( dogsLastTic == null ) {
     		dogsLastTic = new Point[dogs.length];
