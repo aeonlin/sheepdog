@@ -1,4 +1,4 @@
-package sheepdog.g7;
+package sheepdog.g7test;
 
 import sheepdog.sim.Point;
 
