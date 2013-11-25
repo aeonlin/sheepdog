@@ -16,6 +16,8 @@ class Sweep {
   private static final int SWEEP_CIRCLE      = 4;
   private int mode = RUN_TO_OTHER_SIDE;
 
+  public Record globalRecord;
+
   public int radius = 50;
   public boolean changeRadius = false;
   public Point[] arcPoints;
@@ -27,12 +29,13 @@ class Sweep {
 
   public boolean sweeping = false;
 
-  public Sweep(Point[] dgs, Point[] sh, int idx){
+  public Sweep(Point[] dgs, Point[] sh, int idx, Record globalRecord){
     dogs = dgs;
     sheep = sh;
     current = dogs[idx];
     id = idx;
     arcPoints = new Point[dgs.length];
+    globalRecord = globalRecord;
   }
 
   public Point nextMove(){
@@ -51,20 +54,24 @@ class Sweep {
           next = Geometry.travelTowards(current, farRight, max_dog_speed);
           break;
         case ALIGN_ON_FAR_WALL:
-          double y = (down_limit / (dogs.length) * id);
+          double y = (down_limit / (dogs.length-1) * id);
           System.out.println("Y VALUE: " + y);
           System.out.println("DOG ID: " + id + "Y Value: " + y);
           Point arcLocation = new Point(right_limit, y);
           next = Geometry.next_toward_goal(current, arcLocation, 1.99999);
           break;
-        case SWEEP_LEFT:
-          Point towardsCenter = new Point(right_limit/2, current.y);
-          next = Geometry.travelTowards(current, towardsCenter, max_dog_speed/3);
-          break;
+        // case SWEEP_LEFT:
+        //   Point towardsCenter = new Point(right_limit/2, current.y);
+        //   next = Geometry.travelTowards(current, towardsCenter, max_dog_speed/3);
+        //   break;
         case SWEEP_CIRCLE:
           if(allDogsFar()){
             Point towardsCenter = new Point(right_limit/2, current.y);
             next = Geometry.next_toward_goal(current, towardsCenter, max_dog_speed/3);
+          }
+          else if(doneSqueezing()){
+            System.out.println("DONE SQUEEZING NOW");
+            globalRecord.sweepPhase =2;
           }
           else{
             // Top six dogs
@@ -78,7 +85,7 @@ class Sweep {
               next = Geometry.next_toward_goal(current, goalPoint, max_dog_speed/3);
             }
             else{
-              double newY = (down_limit / (dogs.length-6.0)) * (id-3.0);
+              double newY = (down_limit / (dogs.length-7.0)) * (id-3.0);
               System.out.println("Y VALUE: " + newY);
               System.out.println("DOG ID: " + id + "Y Value: " + newY);
               Point newPoint = new Point(dogs[id].x, newY);
@@ -146,6 +153,14 @@ class Sweep {
     boolean value = anyAtTop || anyAtBottom;
     System.out.println("ANY AT TOP BOTTOM: " + value);
     return anyAtTop || anyAtBottom;
+  }
+
+  private boolean doneSqueezing(){
+    System.out.println("THIS IS THE DOGS Y: " + dogs[0].y);
+    if(Math.abs(dogs[0].y - 50.0) <= 0.3){
+      return true;
+    }
+    return false;
   }
 
   private boolean allDogsFar(){

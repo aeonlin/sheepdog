@@ -58,11 +58,12 @@ public class Player extends sheepdog.sim.Player {
       int idx = id - 1;
 
       if (sweeps[idx] == null) {
-        sweeps[idx] = new Sweep(dogs, sheep, id - 1);
+        sweeps[idx] = new Sweep(dogs, sheep, id - 1, globalRecord);
       } else {
         sweeps[idx].current = dogs[idx];
         sweeps[idx].dogs = dogs;
         sweeps[idx].sheep = sheep;
+        sweeps[idx].globalRecord = globalRecord;
       }
       return sweeps[idx].nextMove();
     }
@@ -78,13 +79,13 @@ public class Player extends sheepdog.sim.Player {
                 return move_dogs_to_the_other_side(dogs, sheeps);
             case 0:
                 return sweep_sheep(dogs, sheeps);
-            /*
-            case 1:
-                return collect_sheep(dogs, sheeps);
-            case 2:
-                return move_sheep(dogs, sheeps);
+            
+            // case 1:
+            //     return collect_sheep(dogs, sheeps);
+            // case 2:
+            //     return move_sheep(dogs, sheeps);
             case 3:
-            */
+                break;
             default:
                 break;
         }
