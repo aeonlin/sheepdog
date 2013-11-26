@@ -11,6 +11,11 @@ public class Point {
         y = yy;
     }
 
+    public Point(Point o) {
+        this.x = o.x;
+        this.y = o.y;
+    }
+
     public boolean equals(Point o) {
         return o.x == x && o.y == y;
     }

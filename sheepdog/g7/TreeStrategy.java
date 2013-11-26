@@ -1,6 +1,7 @@
 package sheepdog.g7;
 
 import sheepdog.sim.Point;
+import java.util.*;
 
 class TreeStrategy {
   private Point current;
@@ -13,6 +14,7 @@ class TreeStrategy {
   static double DOG_SPEED = 2.0;
   private int nblacks;
   private int id;
+  private int targetSheep = -1;
   SteinerTree stree = new SteinerTree();
 
   public TreeStrategy(Point current, Point[] sheep, Point[] dogs, int id, int nblacks){
@@ -29,6 +31,18 @@ class TreeStrategy {
     this.dogs = dogs;
   }
 
+  private boolean sheepInDogsRegion(int sheep_i){
+    Point pos = sheep[sheep_i];
+    double x = pos.x - 50;
+    double y = pos.y - 50;
+    double angle = Geometry.angleFromSlope(y,x);
+
+    double incr =  Math.PI / dogs.length;
+    double bottom = (-Math.PI/2) + ((id - 1) * incr);
+    double top = (-Math.PI/2) + ((id) * incr);
+    return angle > bottom && angle < top;
+  }
+
   public Point nextMove(){
     if (current.x < 50) {
       return Geometry.travelTowards(current, gate, DOG_SPEED);
@@ -39,16 +53,15 @@ class TreeStrategy {
     int [] parents = stree.fill(sheep);
     fillDistToRoot(parents, -1 , 0.0);
 
-    int[] farthest = findFarthest(1);
-    System.out.println(java.util.Arrays.toString(farthest));
-    int sheepid = closestUnmarkedSheep(farthest, parents);
-    System.out.println(sheepid);
+    int[] farthest = findFarthest(dogs.length);
+    int sheepid = farthest[0];
+
 
     if (sheepid != -1 && parents[sheepid] != -1 && Geometry.distance(sheep[sheepid], sheep[parents[sheepid]]) < 1){
       sheepid = parents[sheepid];
     }
 
-    Point fromPoint= sheep[sheepid];
+    Point fromPoint = sheep[sheepid];
     Point toPoint;
 
     if (parents[sheepid] == -1){
@@ -57,14 +70,14 @@ class TreeStrategy {
       toPoint = sheep[parents[sheepid]];
     }
 
-    Point dogPoint = positionDogNearSheep(fromPoint, toPoint, 1.99);
+    Point dogPoint = positionDogNearSheep(fromPoint, toPoint, 2.0 - epsilon);
 
     Point motion = new Point(dogPoint.x-dogs[id-1].x, dogPoint.y-dogs[id-1].y);
-    double motionDist=Geometry.vectorLengthPoint(motion);
+    double motionDist = Geometry.vectorLengthPoint(motion);
 
     if (motionDist > DOG_SPEED) {
-      motion.x=motion.x/motionDist*(DOG_SPEED-epsilon);
-      motion.y=motion.y/motionDist*(DOG_SPEED-epsilon);
+      motion.x = motion.x/motionDist*(DOG_SPEED-epsilon);
+      motion.y = motion.y/motionDist*(DOG_SPEED-epsilon);
     }
 
     Point dogPos = new Point(dogs[id-1].x+motion.x, dogs[id-1].y+motion.y);
@@ -88,12 +101,10 @@ class TreeStrategy {
         double slope = (from.y - to.y)/(from.x - to.x);
         double initialDistance = Geometry.distance(from, to);
 
-        // Final Coordinates
         Point finalDestination = new Point();
         finalDestination.x = ((from.x - to.x)*(initialDistance + BUFFER)/(initialDistance)) + to.x;
         finalDestination.y = ((from.y - to.y)*(initialDistance + BUFFER)/(initialDistance)) + to.y;
 
-        // Error Checking
         if (finalDestination.x > 100)
         {
           finalDestination.x = 100;
@@ -136,38 +147,9 @@ class TreeStrategy {
         }
     }
 
-    private static int[] targetedSheep;
-    // [-1 -1 -1]
-
     private Point nodePointFromIndex(int sheepIndex){
       if (sheepIndex == -1) return gate;
       return sheep[sheepIndex];
-    }
-    private int closestUnmarkedSheep(int[] distances, int[] parents){
-      if (targetedSheep == null) {
-        targetedSheep = new int[sheep.length];
-        for (int i = 0; i < parents.length; i++){
-          targetedSheep[i] = -1;
-        }
-      }
-
-      for (int sheepIndex = 0; sheepIndex < distances.length; sheepIndex++){
-        // but mark it as -2 when it gets to other side
-        if (Geometry.distance(sheep[sheepIndex], nodePointFromIndex(parents[sheepIndex])) < 1) {
-          targetedSheep[sheepIndex] = -2;
-        }
-        // take first untargeted
-        if (targetedSheep[sheepIndex] == -1){
-          targetedSheep[sheepIndex] = id;
-          return sheepIndex;
-        }
-        // or take one you marked
-        if (targetedSheep[sheepIndex] == id){
-          return sheepIndex;
-        }
-      }
-      System.out.println("none found");
-      return 0;
     }
 
     private int[] findFarthest(int k) {
@@ -175,6 +157,9 @@ class TreeStrategy {
         for (int j = 0; j < d.length; j++) {
           // each has negative 1.5 * distnce from current dog to that sheep
           d[j] = distToRoot[j] - (Geometry.distance(dogs[id-1], sheep[j]) * 1.5);
+          if (!sheepInDogsRegion(j)){
+            d[j] -= 40;
+          }
         }
 
         // if on left, say distance is even more negative
@@ -188,16 +173,18 @@ class TreeStrategy {
           index[i] = i;
         }
 
+        // dynamic programming ftw
         for (int i = 0; i < distToRoot.length; i++) {
-          // for each distnce, only look at the + 
           for (int j = i + 1; j < distToRoot.length; j++) {
             if (d[i] < d[j]) {
-              double t = d[i];
+              // swap
+              double temp = d[i];
               d[i] = d[j];
-              d[j] = t;
-              int tt   = index[i];
+              d[j] = temp;
+
+              int temp2 = index[i];
               index[i] = index[j];
-              index[j] = tt;
+              index[j] = temp2;
             }
           }
         }

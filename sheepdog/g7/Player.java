@@ -1,5 +1,4 @@
 package sheepdog.g7;
-import java.util.*;
 
 import sheepdog.sim.Point;
 import java.util.*;
@@ -35,7 +34,7 @@ public class Player extends sheepdog.sim.Player {
 
         if (treeStrategies == null){
           treeStrategies = new TreeStrategy[dogs.length];
-        } 
+        }
         if (treeStrategies[id-1] == null){
           treeStrategies[id-1] = new TreeStrategy(current, sheeps, dogs, id, nblacks);
         } else {
@@ -44,7 +43,6 @@ public class Player extends sheepdog.sim.Player {
 
         // basic scenario
         if( mode == false) {
-          System.out.println("here");
             return treeStrategies[id-1].nextMove();
         }
         // advanced scenario
@@ -59,7 +57,7 @@ public class Player extends sheepdog.sim.Player {
       int idx = id - 1;
 
       if (sweeps[idx] == null) {
-        sweeps[idx] = new Sweep(dogs, sheep, id - 1);
+        sweeps[idx] = new Sweep(dogs, sheep, id - 1, globalRecord);
       } else {
         sweeps[idx].current = dogs[idx];
         sweeps[idx].dogs = dogs;
@@ -294,15 +292,6 @@ public class Player extends sheepdog.sim.Player {
         return new Point(0.0, 0.0);
     }
 
-
-}
-
-class Record {
-
-    public Point[] sheepsMovement;
-    public Point[] dogsMovement;
-
-    // add more if you need it!
 
 }
 
