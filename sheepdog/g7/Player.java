@@ -32,6 +32,13 @@ public class Player extends sheepdog.sim.Player {
                       Point[] sheeps) { // positions of the sheeps
         Point current = dogs[id-1];
 
+        Point[] blackSheep = new Point[nblacks];
+        for (int i = 0 ; i < nblacks; i++){
+          blackSheep[i] = sheeps[i];
+        }
+        if (mode){
+          sheeps = blackSheep;
+        }
         if (treeStrategies == null){
           treeStrategies = new TreeStrategy[dogs.length];
         }
@@ -44,8 +51,7 @@ public class Player extends sheepdog.sim.Player {
         // basic scenario
         if( mode == false) {
             // return basic_strategy(dogs, sheeps);
-            if  (dogs.length >= sheeps.length)
-                return treeStrategies[id-1].nextMove();
+            if  (dogs.length >= sheeps.length) {
                 return basic_strategy(dogs, sheeps);
             } else if (dogs.length < 35){
                 return treeStrategies[id-1].nextMove();
@@ -55,7 +61,7 @@ public class Player extends sheepdog.sim.Player {
         }
         // advanced scenario
         else {
-            return current;
+            return treeStrategies[id-1].nextMove();
         }
     }
 
