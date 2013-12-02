@@ -24,6 +24,11 @@ class Record {
     public Point gatePoint;
     public Point idlePoint;
 
+    // for advanced mode: 
+    // direction == -1 : sweep black sheep to the left
+    // direction == 1: sweep white sheep to the right
+    public int gameDirection;
+
     public Record() {
         sweepPhase = -1;
         targetSheepIndex = -1;

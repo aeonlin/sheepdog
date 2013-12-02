@@ -5,6 +5,7 @@ import java.util.*;
 
 public class Player extends sheepdog.sim.Player {
     private int nblacks;
+    private int sim_nblacks;
     private boolean mode;
 
     private static final double up_limit = 0.0;
@@ -24,18 +25,57 @@ public class Player extends sheepdog.sim.Player {
     public Sweep[] sweeps;
 
     public void init(int nblacks, boolean mode) {
-        this.nblacks = nblacks;
+        this.sim_nblacks = nblacks;
         this.mode = mode;
         strategy_phase = -1; // nothing happens now
         globalRecord = new Record();
+        globalRecord.gameDirection = 1;
     }
 
     // Return: the next position
     // my position: dogs[id-1]
-    public Point move(Point[] dogs, // positions of dogs
-                      Point[] sheeps) { // positions of the sheeps
+    public Point move(Point[] sim_dogs, // positions of dogs
+                      Point[] sim_sheeps) { // positions of the sheeps
+        
+        //Point[] dogs = sim_dogs;
+        //Point[] sheeps = sim_sheeps;
+        //nblacks = sim_nblacks;
+        
+        Point[] dogs = new Point[sim_dogs.length];
+        Point[] sheeps = new Point[sim_sheeps.length];
+        sheeps = copyPointArray(sim_sheeps, globalRecord.gameDirection, true);
+        dogs = copyPointArray(sim_dogs, globalRecord.gameDirection, false);
         Point current = dogs[id-1];
-
+        Point next = new Point();
+        //sheeps = copyPointArray(sim_sheeps, -1, true);
+        //dogs = copyPointArray(sim_dogs, -1, false);
+        
+        if (allTargetSheepMoved(globalRecord.gameDirection, sim_sheeps) && mode) {
+            System.out.println("Sys.Reset: old dir = " + globalRecord.gameDirection);
+            // change to the other direction
+            int dir = globalRecord.gameDirection;
+            strategy_phase = -1; // forget everything
+            globalRecord = new Record();
+            globalRecord.gameDirection = dir * (-1);
+            // and reset all the necessary data structure
+            // reset the sheeps: exchange the roles of black sheeps and white sheeps
+            if (globalRecord.gameDirection < 0) {
+                nblacks = sim_nblacks;
+            }
+            else {
+                nblacks = sheeps.length - sim_nblacks;
+            }
+            sheeps = copyPointArray(sim_sheeps, globalRecord.gameDirection, true);
+            dogs = copyPointArray(sim_dogs, globalRecord.gameDirection, false);
+            current = dogs[id-1];
+            treeStrategies = new TreeStrategy[sim_dogs.length];
+            treeStrategies[id-1] = new TreeStrategy(current, sheeps, dogs, id, nblacks);
+            System.out.println("Sys.Reset.done: new dir = " + globalRecord.gameDirection);
+        }
+        if(!mode) {
+            globalRecord.gameDirection = -1;
+        }
+        
         Point[] blackSheep = new Point[nblacks];
         for (int i = 0 ; i < nblacks; i++){
           blackSheep[i] = sheeps[i];
@@ -56,22 +96,74 @@ public class Player extends sheepdog.sim.Player {
         if( mode == false) {
             // return basic_strategy(dogs, sheeps);
             if  (dogs.length >= sheeps.length) {
-                return basic_strategy(dogs, sheeps);
+                next =  basic_strategy(dogs, sheeps);
             } else if (dogs.length < 35){
-                return treeStrategies[id-1].nextMove();
+                next =  treeStrategies[id-1].nextMove();
             } else {
-                return manyDogStrategy(dogs, sheeps);
+                next = manyDogStrategy(dogs, sheeps);
             }
         }
         // advanced scenario
         else {
             //return basic_strategy(dogs, sheeps);
-            return treeStrategies[id-1].nextMove();
+            // return basic_strategy(dogs, sheeps);
+            if  (dogs.length >= nblacks) {
+                next =  basic_strategy(dogs, sheeps);
+            } else 
+                next =  treeStrategies[id-1].nextMove();
+        }
+        
+        if (globalRecord.gameDirection > 0) {
+            next.x = 100.0 - next.x;
+        }
+        
+        return next;
+    }
+
+    private Point[] copyPointArray(Point[] sim_a, int gameDirection, boolean isSheep) {
+        Point[] a = new Point[sim_a.length];
+        if (gameDirection < 0) {
+            for (int i = 0; i < sim_a.length; i++) {
+                a[i] = new Point(sim_a[i].x, sim_a[i].y);
+            }
+        }
+        else {
+            for (int i = 0; i < sim_a.length; i++) {
+                int j = i;
+                if (isSheep) {
+                    j = sim_a.length - i - 1;
+                }
+                a[i] = new Point(100.0 - sim_a[j].x, sim_a[j].y);
+            }
+        }
+        return a;
+    }
+
+    private boolean allTargetSheepMoved(int gameDirection, Point[] sim_sheeps) {
+        if (gameDirection < 0) {
+            // check if all black sheeps are on the left
+            for (int i = 0; i < sim_nblacks; i++) {
+                System.out.println();
+                System.out.print(i + ".x="+sim_sheeps[i].x+",");
+                if (sim_sheeps[i].x > 50.0) {
+                    return false;
+                }
+            }
+            return true;
+        }
+        else {
+            System.out.println("g.d>0");
+            // check if all the white sheeps are on the right
+            for (int i = sim_nblacks; i < sim_sheeps.length; i++) {
+                if (sim_sheeps[i].x < 50.0) {
+                    return false;
+                }
+            }
+            return true;
         }
     }
 
-
-     private Point manyDogStrategy(Point[] dogs, Point[] sheep) {
+    private Point manyDogStrategy(Point[] dogs, Point[] sheep) {
       if (sweeps == null) sweeps = new Sweep[dogs.length];
       int idx = id - 1;
 
