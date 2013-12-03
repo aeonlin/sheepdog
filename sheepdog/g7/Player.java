@@ -8,18 +8,11 @@ public class Player extends sheepdog.sim.Player {
     private int sim_nblacks;
     private boolean mode;
 
-    private static final double up_limit = 0.0;
-    private static final double down_limit = 100.0;
-    private static final double left_limit = 0.0;
-    private static final double right_limit = 100.0;
     private static final double max_dog_speed = 1.9999;
     private static final double max_sheep_speed = 0.9999;
 
     private Record globalRecord;
     private TreeStrategy[] treeStrategies;
-
-    private static final double dog_territory_range = 1.5;
-    private static final double border_distance = 49.5;
 
     private int strategy_phase;
     public Sweep[] sweeps;
