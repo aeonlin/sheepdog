@@ -256,7 +256,7 @@ class Geometry {
   // for dog movement
   public static Point next_toward_goal(Point current, Point goal, double speed) {
       double max_dog_speed = 1.9999;
-      return next_toward_goal(current, goal, speed);
+      return next_toward_goal(current, goal, speed, max_dog_speed);
   }
   public static Point next_toward_goal(Point current, Point goal, double speed, double limitation) {
     Point direction = new Point( goal.x - current.x, goal.y - current.y );
