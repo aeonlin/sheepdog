@@ -96,6 +96,7 @@ public class Player extends sheepdog.sim.Player {
             int dir = globalRecord.gameDirection;
             strategy_phase = -1; // forget everything
             globalRecord = new Record();
+            globalRecord.initialized = false;
             globalRecord.gameDirection = dir * (-1);
             // and reset all the necessary data structure
             // reset the sheeps: exchange the roles of black sheeps and white sheeps
@@ -198,8 +199,8 @@ public class Player extends sheepdog.sim.Player {
     }
 
     private Point move_dogs_to_the_other_side( Point[] dogs, Point[] sheeps) {
-        if(dogs[id-1].x == 0 ) {
-            globalRecord.initialize(id, dogs, sheeps); 
+        if(!globalRecord.initialized) {
+            globalRecord.initialize(id, dogs, sheeps);
         }
 
         Point next = new Point(dogs[id-1].x, dogs[id-1].y);
