@@ -77,7 +77,7 @@ public class Player extends sheepdog.sim.Player {
             // return basic_strategy(dogs, sheeps);
             if  (dogs.length >= nblacks || globalRecord.gameDirection == 1) {
                 next =  basic_strategy(dogs, sheeps);
-            } else 
+            } else
                 next =  treeStrategies[id-1].nextMove();
         }
         

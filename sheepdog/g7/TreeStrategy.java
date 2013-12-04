@@ -46,7 +46,7 @@ class TreeStrategy {
   public Point nextMove(){
     if (current.x < 50) {
       return Geometry.travelTowards(current, gate, DOG_SPEED);
-    }
+  }
 
     distToRoot = new double[sheep.length];
     // indecies of parents for each sheep
@@ -70,7 +70,14 @@ class TreeStrategy {
       toPoint = sheep[parents[sheepid]];
     }
 
-    Point dogPoint = positionDogNearSheep(fromPoint, toPoint, 2.0 - epsilon);
+    // 0.4 - 648,598,650
+    // 0.5 - 494,563, 603, 598
+    // 0.6 - 590, 546, 493
+    // 0.7 - 526, 554, 493, 591
+    // 1.0 - 508, 527, 463, 432
+    // 1.5 - 603, 405, 460, 417
+    // 2.0 - 519, 582, 525
+    Point dogPoint = positionDogNearSheep(fromPoint, toPoint, 1.5);
 
     Point motion = new Point(dogPoint.x-dogs[id-1].x, dogPoint.y-dogs[id-1].y);
     double motionDist = Geometry.vectorLengthPoint(motion);
@@ -97,13 +104,13 @@ class TreeStrategy {
       return newSheeps;
     }
 
-    static Point positionDogNearSheep(Point from, Point to, double BUFFER){
+    static Point positionDogNearSheep(Point from, Point to, double buffer){
         double slope = (from.y - to.y)/(from.x - to.x);
         double initialDistance = Geometry.distance(from, to);
 
         Point finalDestination = new Point();
-        finalDestination.x = ((from.x - to.x)*(initialDistance + BUFFER)/(initialDistance)) + to.x;
-        finalDestination.y = ((from.y - to.y)*(initialDistance + BUFFER)/(initialDistance)) + to.y;
+        finalDestination.x = ((from.x - to.x)*(initialDistance + buffer)/(initialDistance)) + to.x;
+        finalDestination.y = ((from.y - to.y)*(initialDistance + buffer)/(initialDistance)) + to.y;
 
         if (finalDestination.x > 100)
         {
