@@ -62,10 +62,9 @@ public class Player extends sheepdog.sim.Player {
 
         // basic scenario
         if( mode == false) {
-            // return basic_strategy(dogs, sheeps);
             if  (dogs.length >= sheeps.length) {
                 next = basic_strategy(dogs, sheeps);
-            } else if (dogs.length < 35){
+            } else if (dogs.length < 32){
                 next = treeStrategies[id-1].nextMove();
             } else {
                 next = manyDogStrategy(dogs, sheeps);
@@ -297,8 +296,11 @@ public class Player extends sheepdog.sim.Player {
         }
         System.out.print("SheepChased:" + sheepList.get(index) + ", by the dog at: ");
         Geometry.print_point(theDog, "");
-        if (Geometry.vector_length(meDog, sheeps[sheepList.get(index).intValue()]) <= keepDistance * 1.1 &&
-            Geometry.vector_length(theDog, sheeps[sheepList.get(index).intValue()]) > dogTerritory
+        Point theSheep = sheeps[sheepList.get(index).intValue()];
+        if (Geometry.vector_length(meDog, theSheep) <= keepDistance * 1.1 &&
+             ( Geometry.vector_length(theDog, theSheep) > dogTerritory ||
+               Geometry.vector_length(theDog, globalRecord.gatePoint) > 
+               Geometry.vector_length(theSheep, globalRecord.gatePoint) + dogTerritory)
             ) {
             //my target is not yet chased by "theDog" for now
             return;
@@ -391,10 +393,19 @@ public class Player extends sheepdog.sim.Player {
             j++;
         }
         */
+        double dogTerritory = 2.0;
         for (int i = 0; i < id-1; i++) {
             remove_other_dogs_targets(sheepList, sheeps, dogs[i], dogs[id-1]);
         }
-        return nearest_sheep(sheepList, sheeps, dogs[id-1]);
+        int targetIndex = nearest_sheep(sheepList, sheeps, dogs[id-1]);
+        if (targetIndex == -1) {
+            return targetIndex;
+        }
+        if( Geometry.vector_length(sheeps[targetIndex], globalRecord.gatePoint) <
+            Geometry.vector_length(dogs[id-1], globalRecord.gatePoint) - dogTerritory) {
+            targetIndex = -1;
+        }
+        return targetIndex;
     }
     /*
     private int nearest_sheep_not_chased(ArrayList<Integer> sheepList, Point[] sheeps, Point[] dogs) {
