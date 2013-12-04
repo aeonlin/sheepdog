@@ -62,20 +62,18 @@ public class Player extends sheepdog.sim.Player {
 
         // basic scenario
         if( mode == false) {
-            // return basic_strategy(dogs, sheeps);
-            if  (dogs.length >= sheeps.length) {
+            if (dogs.length >= sheeps.length) {
                 next =  basic_strategy(dogs, sheeps);
             } else if (dogs.length < 35){
                 next =  treeStrategies[id-1].nextMove();
+            
             } else {
                 next = manyDogStrategy(dogs, sheeps);
             }
         }
         // advanced scenario
         else {
-            //return basic_strategy(dogs, sheeps);
-            // return basic_strategy(dogs, sheeps);
-            if  (dogs.length >= nblacks) {
+            if (dogs.length >= nblacks || globalRecord.gameDirection == 1) {
                 next =  basic_strategy(dogs, sheeps);
             } else 
                 next =  treeStrategies[id-1].nextMove();
@@ -164,18 +162,23 @@ public class Player extends sheepdog.sim.Player {
     }
 
     private Point manyDogStrategy(Point[] dogs, Point[] sheep) {
-      if (sweeps == null) sweeps = new Sweep[dogs.length];
-      int idx = id - 1;
+        if (sweeps == null) sweeps = new Sweep[dogs.length];
+        int idx = id - 1;
 
-      if (sweeps[idx] == null) {
-        sweeps[idx] = new Sweep(dogs, sheep, id - 1, globalRecord);
-      } else {
-        sweeps[idx].current = dogs[idx];
-        sweeps[idx].dogs = dogs;
-        sweeps[idx].sheep = sheep;
-        sweeps[idx].globalRecord = globalRecord;
-      }
-      return sweeps[idx].nextMove();
+        if (sweeps[idx] == null) {
+            sweeps[idx] = new Sweep(dogs, sheep, id - 1, globalRecord);
+        } else {
+            sweeps[idx].current = dogs[idx];
+            sweeps[idx].dogs = dogs;
+            sweeps[idx].sheep = sheep;
+            sweeps[idx].globalRecord = globalRecord;
+        }
+        if(!sweeps[idx].strategyEnd) {
+            return sweeps[idx].nextMove();    
+        } else {
+            return basic_strategy(dogs, sheep);
+        }
+        
     }
 
     private void log(String message){
@@ -274,6 +277,36 @@ public class Player extends sheepdog.sim.Player {
         return index;
     }
 
+
+
+    private void remove_other_dogs_targets(ArrayList<Integer> sheepList, Point[] sheeps, Point theDog, Point meDog) {
+        double keepDistance = 0.1;
+        double dogTerritory = 2.0;
+
+        if(sheepList.size() == 0) {
+            return;
+        }
+        double min_distance = -1;
+        int index = -1;
+        for(int i = 0; i < sheepList.size(); i++) {
+            double d = Geometry.vector_length(theDog, sheeps[sheepList.get(i)]);
+            if(index == -1 || min_distance > d) {
+                index = i;
+                min_distance = d;
+            }
+        }
+        System.out.print("SheepChased:" + sheepList.get(index) + ", by the dog at: ");
+        Geometry.print_point(theDog, "");
+        if (Geometry.vector_length(meDog, sheeps[sheepList.get(index).intValue()]) <= keepDistance * 1.1 &&
+            Geometry.vector_length(theDog, sheeps[sheepList.get(index).intValue()]) > dogTerritory
+            ) {
+            //my target is not yet chased by "theDog" for now
+            return;
+        }
+        sheepList.remove(index);
+    }
+
+
     private void remove_other_dogs_targets(ArrayList<Integer> sheepList, Point[] sheeps, Point theDog) {
         if(sheepList.size() == 0) {
             return;
@@ -292,12 +325,85 @@ public class Player extends sheepdog.sim.Player {
         sheepList.remove(index);
     }
 
+
+    /*
+    private int nearest_sheep_not_chased(ArrayList<Integer> sheepList, Point[] sheeps, Point[] dogs) {
+        double min_distance = -1;
+        int index = -1;
+        while(index == -1 && sheepList.size() != 0) {
+            for(int i = 0; i < sheepList.size(); i++) {
+                double d = Geometry.vector_length(dogs[id-1], sheeps[sheepList.get(i).intValue()]);
+                if(index == -1 || min_distance > d) {
+                    index = i;
+                    min_distance = d;
+                }
+            }
+            for(int i = 0; i < dogs.length; i++) {
+                if(sheepList.size()==0) {
+                    break;
+                }
+                if(Geometry.vector_length(dogs[i], sheeps[sheepList.get(index).intValue()]) < 0.2) {
+                    sheepList.remove(index);
+                    index = -1;
+                    min_distance = -1;
+                    break;
+                }
+            }
+        }
+        if(index != -1) {
+            return sheepList.get(index).intValue();
+        }
+        else {
+            return -1;
+        }
+    }
+    */
+
+
+    /*    
+    private int nearest_sheep_not_chased(ArrayList<Integer> sheepList, Point[] sheeps, Point[] dogs) {
+        if (sheepList.size() < id) {
+            return -1;
+        }
+        if (sheepList.size() < dogs.length) {
+            return sheepList.get(id-1).intValue();
+        }
+        int start = (sheepList.size() * (id-1) )/dogs.length;
+        int end = (sheepList.size() * id )/dogs.length;
+        ArrayList<Integer> theSubList = new ArrayList<Integer>();
+        theSubList.addAll(sheepList.subList(start, end));
+        return nearest_sheep(theSubList, sheeps, dogs[id-1]);
+    }
+    */
+    
+
+    private int nearest_sheep_not_chased(ArrayList<Integer> sheepList, Point[] sheeps, Point[] dogs) {
+        /*
+        ArrayList<IndexDistancePair> dogListByDistanceToGate = new ArrayList<IndexDistancePair>();
+        for (int i = 0; i < dogs.length; i++) {
+            dogListByDistanceToGate.add(new IndexDistancePair(i, Geometry.vector_length(dogs[i], globalRecord.gatePoint)));
+        }
+        Collections.sort(dogListByDistanceToGate);
+        int j = 0;
+        while (dogListByDistanceToGate.get(j).index != id-1) {
+            int k = dogListByDistanceToGate.get(j).index;
+            remove_other_dogs_targets(sheepList, sheeps, dogs[k], dogs[id-1]);
+            j++;
+        }
+        */
+        for (int i = 0; i < id-1; i++) {
+            remove_other_dogs_targets(sheepList, sheeps, dogs[i], dogs[id-1]);
+        }
+        return nearest_sheep(sheepList, sheeps, dogs[id-1]);
+    }
+    /*
     private int nearest_sheep_not_chased(ArrayList<Integer> sheepList, Point[] sheeps, Point[] dogs) {
         for (int i = 0; i < id-1; i++) {
             remove_other_dogs_targets(sheepList, sheeps, dogs[i]);
         }
         return nearest_sheep(sheepList, sheeps, dogs[id-1]);
     }
+    */
 
     private Point sweep_sheep( Point[] dogs, Point[] sheeps ) {
         // goal: to sweep all the sheeps from the fence
@@ -322,7 +428,7 @@ public class Player extends sheepdog.sim.Player {
         }
         switch(sweepPhase) {
             case 0:
-                double keepDistance = 1.0;
+                double keepDistance = 0.1;
                 Point theSheep = sheeps[newTargetIndex];
                 // move to the position that can push the sheep toward the gate next tick
                 Point theSheepPositionNextTick = 
@@ -356,4 +462,27 @@ public class Player extends sheepdog.sim.Player {
         return next;
     }
 
+}
+
+
+class IndexDistancePair implements Comparable<IndexDistancePair>{
+    public int index;
+    public double distance;
+    public IndexDistancePair() {
+        index = -1;
+        distance = -1.0;
+    }
+    public IndexDistancePair(int i, double d) {
+        index = i;
+        distance = d;
+    }
+    public int compareTo(IndexDistancePair p) {
+        if (distance < p.distance) {
+            return -1;
+        }
+        if (distance > p.distance) {
+            return 1;
+        }
+        return 0;
+    }
 }

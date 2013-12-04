@@ -38,13 +38,16 @@ class Sweep {
 
   public boolean sweeping = false;
 
+  public boolean strategyEnd = false;
+
   public Sweep(Point[] dgs, Point[] sh, int idx, Record globalRecord){
     dogs = dgs;
     sheep = sh;
     current = dogs[idx];
     id = idx;
     arcPoints = new Point[dgs.length];
-    globalRecord.initialize(idx+1, dgs, sh);
+    this.globalRecord = globalRecord;
+    this.globalRecord.initialize(idx+1, dgs, sh);
   }
 
   private boolean sheeps_away_from_dog_wall() {
@@ -78,13 +81,17 @@ class Sweep {
     return sheepsAwayFromFarWall;
   }
 
-  private boolean sheeps_away_from_up_and_down() {
+  private boolean sheeps_away_from_up_and_down(double squeezingGapWidth) {
     if(!sheepsAwayFromUpAndDown) {
-      double gapWidth = 1.5;
+      double gapWidth = squeezingGapWidth;
       double awayThreshold = Math.sqrt(4.0 - gapWidth*gapWidth/4.0);
+      double rightGapWidth = down_limit / (double)(dogs.length-7.0);
+      double rightThreshold = Math.sqrt(4.0 - rightGapWidth*rightGapWidth/4.0);
       sheepsAwayFromUpAndDown = true;
       for(Point s : sheep) {
-        if( s.y >= down_limit - awayThreshold || s.y <= up_limit + awayThreshold) {
+        if( s.y >= dogs[dogs.length-1].y - awayThreshold || 
+            s.y <= dogs[0].y + awayThreshold ||
+            s.x >= 50.0 + 2 * gapWidth - rightThreshold - 0.05) {
           sheepsAwayFromUpAndDown = false;
           break;
         }
@@ -158,6 +165,12 @@ class Sweep {
               }
               next = Geometry.next_toward_goal(current, next1, max_sheep_speed * 0.9);
             }
+            for (Point d: dogs) {
+              if (d.x == 50.0 && d.y < 50.5 && d.y > 49.5) {
+                strategyEnd = true;
+                break;
+              }
+            }
           }
           else{
             // Top six dogs
@@ -165,8 +178,13 @@ class Sweep {
             double squeezingSpeed = globalRecord.max_speed_for_gap_width(squeezingGapWidth);
             if(id < 3){
             	Point goalPoint = new Point(0.0,0.0);
-              if(linedOnWall()){
-                goalPoint = new Point(50.0 + (double)(id)*squeezingGapWidth, 50.0 - squeezingLimit);
+              if(linedOnWall(squeezingGapWidth)){
+                if(sheeps_away_from_up_and_down(squeezingGapWidth)) {
+                  goalPoint = new Point(50.0 + (double)(id)*squeezingGapWidth, 50.0 - squeezingLimit);
+                }
+                else {
+                  goalPoint = new Point(current.x, current.y);
+                }
               }
               else if(current.y == 0.0 ){
                 goalPoint = new Point(50 + (double)(id)*squeezingGapWidth, 0);
@@ -181,9 +199,14 @@ class Sweep {
             // ones at bottom
             else if(id > dogs.length-4){
             	Point goalPoint = new Point(0.0,0.0);
-            	if(linedOnWall()){
-            		goalPoint = new Point(50.0 + (double)(dogs.length-id-1)*squeezingGapWidth,
-                                      50.0 + squeezingLimit);
+            	if(linedOnWall(squeezingGapWidth)){
+                if(sheeps_away_from_up_and_down(squeezingGapWidth)) {
+                  goalPoint = new Point(50.0 + (double)(dogs.length-id-1)*squeezingGapWidth,
+                                        50.0 + squeezingLimit);  
+                }
+            		else {
+                  goalPoint = new Point(current.x, current.y);
+                }
             	}
             	else if(current.y == 100.0){
                 goalPoint = new Point(50.0 + (double)(dogs.length-id-1)*squeezingGapWidth, 100.0);
@@ -225,32 +248,23 @@ class Sweep {
       return next;
   }
   
-  public boolean linedOnWall(){
+  public boolean linedOnWall(double squeezingGapWidth){
 	//  if(dogs[0].y == 0.0 && dogs[1].y == 0.0 && dogs[2].y == 0.0 && dogs[dogs.length-2].y == 100.0 && dogs[dogs.length-3].y == 100.0 && dogs[dogs.length-4].y == 100.0){
-    if(!sheeps_away_from_up_and_down()) {
-      return false;
-    }
-
 	  if(linedDogs){
 		  return true;
 	  }
-	  for(int i=0;i<3;i++)
-		  
-	  {
-		  if(dogs[i].y> 0.0)
+	  for(int i=0;i<3;i++) {
+		  if(dogs[i].y != up_limit || dogs[i].x != 50.0 + (double)(i)*squeezingGapWidth)
 			  return false;
 	  }
-	  for(int i = dogs.length-1; i< dogs.length -4; i--) 
-	  {
-		  if(Math.abs(dogs[i].y-100)> 0.0)
-		  return false;
-			  
+	  for(int i = dogs.length-1; i > dogs.length -4; i--) {
+		  if(dogs[i].y != down_limit || dogs[i].x != 50.0 + (double)(dogs.length-i-1)*squeezingGapWidth)
+		    return false;	  
 	  }
-	  	  linedDogs = true;
-		  return true;
-	  }
-//	  return false;
-//  }
+    linedDogs = true;
+		return true;
+  }
+
   public boolean allDogsOnArc(Point[] dogs){
     for(Point dog: dogs){
       boolean checkOnRadius = Math.abs((Math.pow((dog.x - 50.0),2) + Math.pow((dog.y - 50.0),2)) - (Math.pow(radius,2))) <= .5;
