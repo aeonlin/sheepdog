@@ -64,9 +64,9 @@ public class Player extends sheepdog.sim.Player {
         if( mode == false) {
             // return basic_strategy(dogs, sheeps);
             if  (dogs.length >= sheeps.length) {
-                next =  basic_strategy(dogs, sheeps);
+                next = basic_strategy(dogs, sheeps);
             } else if (dogs.length < 35){
-                next =  treeStrategies[id-1].nextMove();
+                next = treeStrategies[id-1].nextMove();
             } else {
                 next = manyDogStrategy(dogs, sheeps);
             }
@@ -75,7 +75,7 @@ public class Player extends sheepdog.sim.Player {
         else {
             //return basic_strategy(dogs, sheeps);
             // return basic_strategy(dogs, sheeps);
-            if  (dogs.length >= nblacks) {
+            if  (dogs.length >= nblacks || globalRecord.gameDirection == 1) {
                 next =  basic_strategy(dogs, sheeps);
             } else 
                 next =  treeStrategies[id-1].nextMove();
